@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: mongodb_container
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build: ./backend
+    container_name: backend_container
+    restart: always
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules #avoid overwriting node_modules
+    ports:
+      - "5321:5000"
+    command: ["npm", "run", "dev"] #Hot-reloading for development
+
+  frontend:
+    build: ./my-react-app
+    container_name: react_app_container
+    ports:
+      - "3123:3000"
+    volumes: 
+      - ./my-react-app:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      
+volumes:
+  mongo_data:
